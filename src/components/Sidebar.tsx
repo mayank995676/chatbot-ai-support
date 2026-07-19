@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { MessageSquare, Plus, Trash2, Database, Menu, X } from "lucide-react";
+import { MessageSquare, Plus, Trash2, Database, Menu, X, LogOut } from "lucide-react";
+import { useSession, signOut } from "next-auth/react";
 
 interface ChatSession {
   id: string;
@@ -32,6 +33,7 @@ export default function Sidebar({
   isOpen,
   onToggle,
 }: SidebarProps) {
+  const { data: session } = useSession();
   return (
     <>
       {/* Mobile Header Toggle */}
@@ -155,6 +157,38 @@ export default function Sidebar({
             <Database className="h-4.5 w-4.5 text-muted-foreground group-hover:text-primary transition-colors" />
             <span>Knowledge Base</span>
           </Link>
+
+          {session?.user && (
+            <>
+              <div className="my-2 border-t border-sidebar-border" />
+              <div className="flex flex-col gap-2 mt-2">
+                <div className="flex items-center gap-2.5 px-3 py-1">
+                  {session.user.image ? (
+                    <img
+                      src={session.user.image}
+                      alt={session.user.name || "User"}
+                      className="w-8 h-8 rounded-full border border-border"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-violet-600 text-white flex items-center justify-center font-bold text-sm">
+                      {session.user.name?.[0]?.toUpperCase() || "U"}
+                    </div>
+                  )}
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold text-slate-800 truncate">{session.user.name}</span>
+                    <span className="text-[10px] text-muted-foreground truncate">{session.user.email}</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  className="flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-destructive hover:bg-destructive/5 font-medium transition-all cursor-pointer border border-transparent hover:border-destructive/10"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </aside>
     </>
