@@ -75,42 +75,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate embeddings in batches of 100 via Gemini batchEmbedContents API
-    const BATCH_SIZE = 100;
-    const embeddings: number[][] = [];
-
-    for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
-      const batch = chunks.slice(i, i + BATCH_SIZE);
-      const requests = batch.map((chunkText) => ({
-        model: "models/gemini-embedding-2",
-        content: {
-          parts: [{ text: chunkText }]
-        }
-      }));
-
-      const embedRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-embedding-2:batchEmbedContents?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ requests }),
-        }
-      );
-
-      if (!embedRes.ok) {
-        const errText = await embedRes.text();
-        console.error("Gemini Embedding API call failed:", errText);
-        throw new Error(`Gemini Embedding API Error: ${errText}`);
-      }
-
-      const embedData = await embedRes.json();
-      if (!embedData.embeddings || embedData.embeddings.length === 0) {
-        throw new Error("Invalid or empty response returned from Gemini Embedding API.");
-      }
-
-      embeddings.push(...embedData.embeddings.map((emb: any) => emb.values));
-    }
-
     // Save document to DB
     const dbDoc = await prisma.document.create({
       data: {
@@ -120,11 +84,11 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Save chunks to DB
-    const chunkRecords = chunks.map((content, idx) => ({
+    // Save chunks to DB (relevance is searched locally via TF-IDF)
+    const chunkRecords = chunks.map((content) => ({
       documentId: dbDoc.id,
       content,
-      embedding: JSON.stringify(embeddings[idx]),
+      embedding: "[]",
     }));
 
     await prisma.chunk.createMany({

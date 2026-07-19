@@ -57,39 +57,21 @@ async function main() {
   const chunks = chunkText(text, 600, 150); // smaller chunk size for more granular context matching
   console.log(`Generated ${chunks.length} chunks.`);
 
-  // 3. Generate embeddings
-  console.log("Generating Gemini vector embeddings...");
-  const requests = chunks.map((chunkText) => ({
-    model: "models/gemini-embedding-2",
-    content: {
-      parts: [{ text: chunkText }]
-    }
-  }));
-
-  const embedRes = await fetch(
-    `https://generativelanguage.googleapis.com/v1/models/gemini-embedding-2:batchEmbedContents?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requests }),
-    }
-  );
-
-  if (!embedRes.ok) {
-    const errText = await embedRes.text();
-    throw new Error(`Gemini Embedding Error: ${errText}`);
-  }
-
-  const embedData = await embedRes.json();
-  const embeddings = embedData.embeddings.map((emb) => emb.values);
-  console.log(`Generated ${embeddings.length} embeddings.`);
+  // 3. Skip external embedding API calls (local TF-IDF is used for search)
+  console.log("Using local TF-IDF relevance indexing...");
 
   // 4. Initialize Database connection
-  const dbPath = path.resolve(__dirname, "dev.db");
-  const adapter = new PrismaBetterSqlite3({ url: `file:${dbPath}` });
+  const { Pool } = require("pg");
+  const { PrismaPg } = require("@prisma/adapter-pg");
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error("DATABASE_URL is not configured.");
+  }
+  const pool = new Pool({ connectionString });
+  const adapter = new PrismaPg(pool);
   const prisma = new PrismaClient({ adapter });
 
-  console.log("Writing knowledge base to SQLite database...");
+  console.log("Writing knowledge base to Neon PostgreSQL database...");
   
   // Clean up any existing document of the same name to support re-runs
   const existingDocs = await prisma.document.findMany({
@@ -107,10 +89,10 @@ async function main() {
     }
   });
 
-  const chunkRecords = chunks.map((content, idx) => ({
+  const chunkRecords = chunks.map((content) => ({
     documentId: dbDoc.id,
     content,
-    embedding: JSON.stringify(embeddings[idx]),
+    embedding: "[]",
   }));
 
   await prisma.chunk.createMany({

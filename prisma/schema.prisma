@@ -1,5 +1,5 @@
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 generator client {
@@ -37,5 +37,5 @@ model Chunk {
   documentId String
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
   content    String
-  embedding  String   // JSON-serialized array of floats
+  embedding  String   // JSON-serialized array of floats (stored as Text)
 }

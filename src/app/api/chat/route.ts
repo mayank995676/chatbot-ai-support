@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { cosineSimilarity } from "@/lib/vector";
+import { searchChunksTfIdf } from "@/lib/vector";
 
 export const maxDuration = 30; // 30 seconds max execution timeout
 
@@ -47,68 +47,16 @@ export async function POST(request: NextRequest) {
       activeChatId = newChat.id;
     }
 
-    // 2. Fetch all Chunks for Similarity Comparison
+    // 2. Fetch all Chunks for Relevance Search
     const allChunks = await prisma.chunk.findMany({
       select: {
-        id: true,
         content: true,
-        embedding: true,
       },
     });
 
     let retrievedContext = "";
-    let similarityDetails: Array<{ content: string; similarity: number }> = [];
-
     if (allChunks.length > 0) {
-      // Generate embedding for user query via Gemini API
-      const embedRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-embedding-2:embedContent?key=${geminiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "models/gemini-embedding-2",
-            content: {
-              parts: [{ text: message.trim() }]
-            }
-          }),
-        }
-      );
-
-      if (!embedRes.ok) {
-        const errText = await embedRes.text();
-        console.error("Gemini query embedding failed:", errText);
-        throw new Error(`Gemini Embedding Error: ${errText}`);
-      }
-
-      const embedData = await embedRes.json();
-      const queryEmbedding = embedData.embedding?.values;
-
-      if (queryEmbedding && Array.isArray(queryEmbedding)) {
-        // Compute similarity score for all chunks
-        const chunkScores = allChunks.map((chunk: { id: string; content: string; embedding: string }) => {
-          let chunkVec: number[];
-          try {
-            chunkVec = JSON.parse(chunk.embedding);
-          } catch {
-            chunkVec = [];
-          }
-          const similarity = cosineSimilarity(queryEmbedding, chunkVec);
-          return { content: chunk.content, similarity };
-        });
-
-        // Filter by threshold and sort descending
-        similarityDetails = chunkScores
-          .filter((c: { content: string; similarity: number }) => c.similarity >= 0.22)
-          .sort((a: { content: string; similarity: number }, b: { content: string; similarity: number }) => b.similarity - a.similarity)
-          .slice(0, 5);
-
-        if (similarityDetails.length > 0) {
-          retrievedContext = similarityDetails
-            .map((c, i) => `[Document Chunk ${i + 1}]\n${c.content}`)
-            .join("\n\n");
-        }
-      }
+      retrievedContext = searchChunksTfIdf(message.trim(), allChunks);
     }
 
     // 3. Save User Message
