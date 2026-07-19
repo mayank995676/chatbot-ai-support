@@ -124,7 +124,7 @@ export default function KnowledgePage() {
       }, 1000);
     } catch (err: any) {
       console.error("Upload error:", err);
-      setErrorState(err.message || "Failed to parse and index document. Check OpenAI key.");
+      setErrorState(err.message || "Failed to parse and index document.");
     }
   };
 
@@ -159,24 +159,27 @@ export default function KnowledgePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col antialiased">
+    <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col antialiased">
+      {/* Background radial gradient mesh for 3D effect */}
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(139,92,246,0.03)_0px,transparent_60%)]" />
+
       {/* Header */}
-      <header className="px-6 py-4 md:px-12 border-b border-border bg-white sticky top-0 z-30 flex items-center justify-between shadow-xs">
+      <header className="px-6 py-4 md:px-12 border-b border-border bg-slate-950/80 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link
             href="/chat"
-            className="p-2 border border-border rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all flex items-center justify-center cursor-pointer"
+            className="p-2 border border-border rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 transition-all flex items-center justify-center cursor-pointer"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
-          <div className="flex items-center gap-2.5 font-semibold text-slate-800">
-            <Database className="h-5 w-5 text-primary" />
+          <div className="flex items-center gap-2.5 font-semibold text-slate-100">
+            <Database className="h-5 w-5 text-violet-400" />
             <h1 className="text-base tracking-tight">Knowledge Base</h1>
           </div>
         </div>
         <Link
           href="/chat"
-          className="text-xs font-semibold px-4 py-2 border border-border rounded-lg bg-white text-slate-700 hover:bg-slate-50 transition-all cursor-pointer"
+          className="text-xs font-semibold px-4 py-2 border border-border rounded-lg bg-slate-900 text-slate-300 hover:bg-slate-800 transition-all cursor-pointer"
         >
           Return to Chat
         </Link>
@@ -185,7 +188,7 @@ export default function KnowledgePage() {
       {/* Main Workspace */}
       <main className="flex-1 max-w-4xl w-full mx-auto px-6 py-8 md:py-12 space-y-8">
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-slate-900 mb-2">
+          <h2 className="text-xl font-bold tracking-tight text-white mb-2">
             Upload Company Documents
           </h2>
           <p className="text-xs text-muted-foreground leading-relaxed">
@@ -201,8 +204,8 @@ export default function KnowledgePage() {
           onClick={() => fileInputRef.current?.click()}
           className={`border-2 border-dashed rounded-2xl p-8 md:p-12 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
             isDragOver
-              ? "border-primary bg-blue-50/20 shadow-xs"
-              : "border-slate-200 bg-white hover:border-slate-400 hover:bg-slate-50/30"
+              ? "border-violet-500 bg-violet-950/20 shadow-lg shadow-violet-500/10"
+              : "border-slate-800 bg-slate-900/40 hover:border-slate-600 hover:bg-slate-900/60"
           }`}
         >
           <input
@@ -213,11 +216,11 @@ export default function KnowledgePage() {
             className="hidden"
           />
 
-          <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 mb-4 border border-slate-100">
-            <Upload className="h-5 w-5" />
+          <div className="w-12 h-12 rounded-xl bg-slate-950 flex items-center justify-center text-slate-400 mb-4 border border-slate-800 shadow-inner">
+            <Upload className="h-5 w-5 text-violet-400" />
           </div>
 
-          <h3 className="font-semibold text-sm text-slate-800 mb-1">
+          <h3 className="font-semibold text-sm text-slate-200 mb-1">
             Drag & drop files or click to upload
           </h3>
           <p className="text-xs text-muted-foreground">PDF or TXT up to 5MB</p>
@@ -225,25 +228,25 @@ export default function KnowledgePage() {
 
         {/* Stateful Progress Area */}
         {uploadStatus !== "idle" && (
-          <div className="p-5 bg-white border border-border rounded-2xl shadow-xs space-y-3.5">
+          <div className="p-5 bg-slate-900/60 border border-border rounded-2xl shadow-xl backdrop-blur-md space-y-3.5">
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-2 font-medium">
                 {uploadStatus === "uploading" && (
                   <>
-                    <Loader2 className="h-4 w-4 text-primary animate-spin" />
+                    <Loader2 className="h-4 w-4 text-violet-400 animate-spin" />
                     <span>Uploading and reading document...</span>
                   </>
                 )}
                 {uploadStatus === "indexing" && (
                   <>
-                    <Loader2 className="h-4 w-4 text-primary animate-spin" />
-                    <span>Chunking & generating OpenAI vector embeddings...</span>
+                    <Loader2 className="h-4 w-4 text-violet-400 animate-spin" />
+                    <span>Chunking & generating vector segments...</span>
                   </>
                 )}
                 {uploadStatus === "success" && (
                   <>
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    <span className="text-green-600 font-semibold">Document indexed successfully!</span>
+                    <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                    <span className="text-emerald-400 font-semibold">Document indexed successfully!</span>
                   </>
                 )}
                 {uploadStatus === "error" && (
@@ -257,14 +260,14 @@ export default function KnowledgePage() {
             </div>
 
             {/* Progress bar */}
-            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+            <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden border border-slate-900">
               <div
                 className={`h-full rounded-full transition-all duration-300 ${
                   uploadStatus === "error"
                     ? "bg-destructive"
                     : uploadStatus === "success"
-                    ? "bg-green-500"
-                    : "bg-primary animate-pulse"
+                    ? "bg-emerald-500"
+                    : "bg-violet-500 animate-pulse"
                 }`}
                 style={{ width: `${progress}%` }}
               />
@@ -279,18 +282,18 @@ export default function KnowledgePage() {
         )}
 
         {/* Uploaded Files Table */}
-        <div className="bg-white border border-border rounded-2xl shadow-xs overflow-hidden">
-          <div className="px-5 py-4 border-b border-border bg-slate-50/50 flex items-center justify-between">
-            <h3 className="font-semibold text-sm text-slate-800">
+        <div className="bg-slate-900/40 border border-border rounded-2xl shadow-xl overflow-hidden backdrop-blur-md">
+          <div className="px-5 py-4 border-b border-border bg-slate-950/40 flex items-center justify-between">
+            <h3 className="font-semibold text-sm text-slate-200">
               Uploaded Documents ({documents.length})
             </h3>
           </div>
 
           {documents.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground flex flex-col items-center">
-              <FileText className="h-8 w-8 text-slate-300 mb-3" />
+              <FileText className="h-8 w-8 text-slate-800 mb-3" />
               <p className="text-xs">No documents uploaded yet</p>
-              <p className="text-[10px] mt-1 text-slate-400">
+              <p className="text-[10px] mt-1 text-slate-500">
                 Upload files to populate the chatbot's knowledge base.
               </p>
             </div>
@@ -299,14 +302,14 @@ export default function KnowledgePage() {
               {documents.map((doc) => (
                 <div
                   key={doc.id}
-                  className="px-5 py-4 flex items-center justify-between hover:bg-slate-50/40 transition-colors"
+                  className="px-5 py-4 flex items-center justify-between hover:bg-slate-900/20 transition-colors"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="w-9 h-9 rounded-lg bg-slate-50 flex items-center justify-center border border-slate-100 text-slate-500">
-                      <FileText className="h-4.5 w-4.5" />
+                    <div className="w-9 h-9 rounded-lg bg-slate-950 flex items-center justify-center border border-slate-800 text-slate-400">
+                      <FileText className="h-4.5 w-4.5 text-violet-400" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-800 truncate" title={doc.name}>
+                      <p className="text-sm font-semibold text-slate-200 truncate" title={doc.name}>
                         {doc.name}
                       </p>
                       <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
@@ -320,7 +323,7 @@ export default function KnowledgePage() {
                   </div>
                   <button
                     onClick={() => handleDelete(doc.id)}
-                    className="p-2 text-slate-400 hover:text-destructive hover:bg-destructive/5 rounded-lg transition-colors cursor-pointer"
+                    className="p-2 text-slate-500 hover:text-destructive hover:bg-destructive/5 rounded-lg transition-colors cursor-pointer"
                     title="Delete document"
                   >
                     <Trash2 className="h-4 w-4" />

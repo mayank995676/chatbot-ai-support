@@ -11,61 +11,28 @@ interface Message {
   createdAt: string;
 }
 
-interface ChatSession {
-  id: string;
-  title: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export default function ChatPage() {
-  const [chats, setChats] = useState<ChatSession[]>([]);
-  const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load chat sessions on mount
+  // Load chat messages from localStorage on mount
   useEffect(() => {
-    fetchChats();
+    const savedMessages = localStorage.getItem("whiterabbit_chat_messages");
+    if (savedMessages) {
+      try {
+        setMessages(JSON.parse(savedMessages));
+      } catch (err) {
+        console.error("Error parsing saved messages:", err);
+      }
+    }
   }, []);
 
-  // Load messages when activeChatId changes
-  useEffect(() => {
-    if (activeChatId) {
-      fetchMessages(activeChatId);
-    } else {
-      setMessages([]);
-    }
-    setError(null);
-  }, [activeChatId]);
-
-  const fetchChats = async () => {
-    try {
-      const res = await fetch("/api/history");
-      if (res.ok) {
-        const data = await res.json();
-        setChats(data);
-      }
-    } catch (err) {
-      console.error("Error loading chat history:", err);
-    }
-  };
-
-  const fetchMessages = async (id: string) => {
-    try {
-      const res = await fetch(`/api/history?chatId=${id}`);
-      if (res.ok) {
-        const data = await res.json();
-        setMessages(data.messages || []);
-      } else {
-        setError("Failed to load conversation history.");
-      }
-    } catch (err) {
-      console.error("Error loading messages:", err);
-      setError("Network error: Could not retrieve conversation.");
-    }
+  // Save messages to localStorage when updated
+  const saveMessagesLocally = (newMessages: Message[]) => {
+    setMessages(newMessages);
+    localStorage.setItem("whiterabbit_chat_messages", JSON.stringify(newMessages));
   };
 
   const handleSendMessage = async (text: string) => {
@@ -82,7 +49,8 @@ export default function ChatPage() {
     };
 
     // Add user message to display immediately
-    setMessages((prev) => [...prev, userMsg]);
+    const updatedMessages = [...messages, userMsg];
+    saveMessagesLocally(updatedMessages);
 
     try {
       const res = await fetch("/api/chat", {
@@ -90,7 +58,6 @@ export default function ChatPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: text,
-          chatId: activeChatId || undefined,
         }),
       });
 
@@ -108,81 +75,47 @@ export default function ChatPage() {
         createdAt: new Date().toISOString(),
       };
 
-      // Append assistant reply and fix potential temporary IDs
-      setMessages((prev) => {
-        // Filter out any optimistic duplicates and append the assistant message
-        return [...prev.filter((m) => m.id !== tempUserMsgId), { ...userMsg, id: Math.random().toString(36).substring(7) }, assistantMsg];
-      });
-
-      // Update active chat selection if it was a new chat
-      if (!activeChatId) {
-        setActiveChatId(data.chatId);
-      }
-
-      // Reload chat list to show new/renamed chats
-      await fetchChats();
+      const finalMessages = [
+        ...updatedMessages.filter((m) => m.id !== tempUserMsgId),
+        { ...userMsg, id: Math.random().toString(36).substring(7) },
+        assistantMsg,
+      ];
+      saveMessagesLocally(finalMessages);
     } catch (err: any) {
       console.error("Chat sending error:", err);
-      setError(err.message || "Failed to send message. Please verify OpenAI credentials.");
+      setError(err.message || "Failed to send message.");
       
-      // Roll back user message from conversation display on strict error
-      setMessages((prev) => prev.filter((m) => m.id !== tempUserMsgId));
+      // Roll back user message from local storage on error
+      saveMessagesLocally(messages);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSelectChat = (id: string) => {
-    setActiveChatId(id);
-  };
-
   const handleNewChat = () => {
-    setActiveChatId(null);
     setMessages([]);
+    localStorage.removeItem("whiterabbit_chat_messages");
     setError(null);
-  };
-
-  const handleDeleteChat = async (id: string) => {
-    try {
-      const res = await fetch(`/api/history?chatId=${id}`, {
-        method: "DELETE",
-      });
-
-      if (res.ok) {
-        if (activeChatId === id) {
-          handleNewChat();
-        }
-        fetchChats();
-      } else {
-        console.error("Failed to delete chat session");
-      }
-    } catch (err) {
-      console.error("Error deleting chat:", err);
-    }
   };
 
   const handleToggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  // Get selected chat title
-  const activeChatTitle = chats.find((c) => c.id === activeChatId)?.title || "New Chat";
-
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-50">
+    <div className="flex h-screen w-screen overflow-hidden bg-slate-950 text-white">
+      {/* Background radial gradient mesh for 3D effect */}
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(139,92,246,0.05)_0px,transparent_60%)]" />
+      
       <Sidebar
-        chats={chats}
-        activeChatId={activeChatId}
-        onSelectChat={handleSelectChat}
         onNewChat={handleNewChat}
-        onDeleteChat={handleDeleteChat}
         isOpen={sidebarOpen}
         onToggle={handleToggleSidebar}
       />
-      <main className="flex-1 h-full flex flex-col min-w-0">
+      <main className="flex-1 h-full flex flex-col min-w-0 bg-transparent">
         <ChatArea
-          chatId={activeChatId}
-          chatTitle={activeChatTitle}
+          chatId="local-session"
+          chatTitle="Support Chat"
           messages={messages}
           isLoading={isLoading}
           onSendMessage={handleSendMessage}
