@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { searchChunksTfIdf } from "@/lib/vector";
+import { searchChunksTfIdf, searchWebFallback } from "@/lib/vector";
 
 export const maxDuration = 30; // 30 seconds max execution timeout
 
@@ -59,6 +59,16 @@ export async function POST(request: NextRequest) {
       retrievedContext = searchChunksTfIdf(message.trim(), allChunks);
     }
 
+    // Web fallback if no matching context is found in local documents
+    let isWebFallback = false;
+    if (!retrievedContext) {
+      const webMatches = await searchWebFallback(message.trim());
+      if (webMatches) {
+        retrievedContext = webMatches;
+        isWebFallback = true;
+      }
+    }
+
     // 3. Save User Message
     await prisma.message.create({
       data: {
@@ -69,7 +79,19 @@ export async function POST(request: NextRequest) {
     });
 
     // 4. Construct System Instruction Prompt
-    const systemPrompt = `You are a professional, helpful customer support AI assistant for White Rabbit AI Solutions. 
+    const systemPrompt = isWebFallback
+      ? `You are a professional, helpful customer support AI assistant for White Rabbit AI Solutions. 
+Your primary task is to answer the user's questions.
+
+Strict constraints:
+1. State clearly to the user that the answer was not found in the uploaded company documents, but you found some relevant information on the web.
+2. Answer the user's question using the provided web search context below.
+3. Keep the tone helpful, professional, and direct.
+
+Provided Web Search Context:
+${retrievedContext}
+`
+      : `You are a professional, helpful customer support AI assistant for White Rabbit AI Solutions. 
 Your primary task is to answer the user's questions.
 
 Strict constraints:

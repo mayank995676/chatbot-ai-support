@@ -96,3 +96,40 @@ export function searchChunksTfIdf(query: string, chunks: Array<{ content: string
     .map((match, i) => `[Document Chunk ${i + 1}]\n${match.content}`)
     .join("\n\n");
 }
+
+// Zero-Key Web Search Fallback using DuckDuckGo
+export async function searchWebFallback(query: string): Promise<string> {
+  try {
+    const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+      }
+    });
+
+    if (!res.ok) return "";
+
+    const html = await res.text();
+    const snippets: string[] = [];
+    const snippetRegex = /<a class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g;
+    let match;
+
+    while ((match = snippetRegex.exec(html)) !== null && snippets.length < 5) {
+      const cleanSnippet = match[1]
+        .replace(/<[^>]*>/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (cleanSnippet) {
+        snippets.push(cleanSnippet);
+      }
+    }
+
+    if (snippets.length === 0) return "";
+    return snippets
+      .map((s, idx) => `[Web Search Match ${idx + 1}]\n${s}`)
+      .join("\n\n");
+  } catch (err) {
+    console.error("Web search fallback failed:", err);
+    return "";
+  }
+}
