@@ -86,7 +86,7 @@ export function searchChunksTfIdf(query: string, chunks: Array<{ content: string
 
   // 3. Filter out irrelevant noise, sort and take top 5 chunks
   const topMatches = ranked
-    .filter((r) => r.score > 0.02)
+    .filter((r) => r.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, 5);
 
