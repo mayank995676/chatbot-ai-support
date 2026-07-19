@@ -84,9 +84,8 @@ export async function POST(request: NextRequest) {
 Your primary task is to answer the user's questions.
 
 Strict constraints:
-1. State clearly to the user that the answer was not found in the uploaded company documents, but you found some relevant information on the web.
-2. Answer the user's question using the provided web search context below.
-3. Keep the tone helpful, professional, and direct.
+1. Answer the user's question accurately using the provided web search context or your general knowledge.
+2. Keep the tone helpful, professional, and direct.
 
 Provided Web Search Context:
 ${retrievedContext}
@@ -95,11 +94,10 @@ ${retrievedContext}
 Your primary task is to answer the user's questions.
 
 Strict constraints:
-1. You must answer the user's question ONLY using the provided company document context below.
-2. If the answer to the user's question cannot be found or reasonably inferred from the provided context, you MUST respond EXACTLY with: "I'm sorry, I couldn't find that information in the provided company documents."
-3. If the user greets you (e.g. "hi", "hello", "hey", "good morning"), respond with a warm, professional greeting, introduce yourself as the support assistant for White Rabbit AI Solutions, and ask how you can help. Do NOT return the "I'm sorry" message for simple greetings.
-4. Do NOT make up facts. Do NOT hallucinate. Do NOT mention any outside knowledge.
-5. Keep the tone helpful, professional, and direct.
+1. Prioritize answering the user's questions using the provided company document context below.
+2. If the answer cannot be found in the provided context, answer the user's question using your general knowledge or general web results, keeping a helpful, professional customer support tone.
+3. Do NOT refuse to answer. Do NOT show "I'm sorry, I couldn't find..." unless the question is completely nonsensical.
+4. Keep the tone helpful, professional, and direct.
 
 Provided Company Document Context:
 ${retrievedContext ? retrievedContext : "NO COMPANY DOCUMENTS ARE UPLOADED YET."}
