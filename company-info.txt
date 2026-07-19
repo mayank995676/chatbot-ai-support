@@ -1,0 +1,50 @@
+Company Information Document
+
+Company Name: White Rabbit AI Solutions
+
+About Us:
+White Rabbit AI Solutions is a technology company based in Japan that provides AI software solutions, web development, automation systems, and digital transformation services.
+
+Services:
+
+1. AI Chatbot Development
+* Custom AI assistants for businesses
+* Customer support automation
+* Knowledge base chatbots
+* Website and WhatsApp chatbot integration
+
+2. Web Development
+* Business websites
+* SaaS applications
+* Landing pages
+* E-commerce platforms
+
+3. Automation Services
+* Workflow automation
+* Data processing systems
+* AI-powered business tools
+
+Business Hours:
+Monday - Friday: 9:00 AM - 6:00 PM (Japan Time)
+Saturday - Sunday: Closed
+
+Contact:
+Email: contact@whiterabbit-ai.example
+Location: Tokyo, Japan
+
+FAQ:
+
+Q: What services does White Rabbit AI Solutions provide?
+A: We provide AI chatbot development, web development, and business automation services.
+
+Q: Where is the company located?
+A: The company is located in Tokyo, Japan.
+
+Q: How can I contact the company?
+A: Customers can contact us through email or our website.
+
+Q: Do you provide custom AI solutions?
+A: Yes, we create custom AI solutions based on business requirements.
+
+Q: What technologies do you use?
+A: We use modern AI models, cloud platforms, web technologies, and automation tools.
