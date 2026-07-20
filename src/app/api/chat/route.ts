@@ -78,6 +78,22 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Fetch custom settings from database, fall back to defaults
+    let dbSettings = await prisma.agentSetting.findUnique({
+      where: { id: "default" },
+    });
+
+    const activeModel = dbSettings?.modelName || "llama-3.3-70b-versatile";
+    const activeTemp = dbSettings?.temperature ?? 0.1;
+    const configuredSystemPrompt = dbSettings?.systemPrompt || `You are a professional, helpful customer support AI assistant for White Rabbit AI Solutions. 
+Your primary task is to answer the user's questions.
+
+Strict constraints:
+1. Prioritize answering the user's questions using the provided company document context below.
+2. If the answer cannot be found in the provided context, answer the user's question using your general knowledge or general web results, keeping a helpful, professional customer support tone.
+3. Do NOT refuse to answer. Do NOT show "I'm sorry, I couldn't find..." unless the question is completely nonsensical.
+4. Keep the tone helpful, professional, and direct.`;
+
     // 4. Construct System Instruction Prompt
     const systemPrompt = isWebFallback
       ? `You are a professional, helpful customer support AI assistant for White Rabbit AI Solutions. 
@@ -90,14 +106,7 @@ Strict constraints:
 Provided Web Search Context:
 ${retrievedContext}
 `
-      : `You are a professional, helpful customer support AI assistant for White Rabbit AI Solutions. 
-Your primary task is to answer the user's questions.
-
-Strict constraints:
-1. Prioritize answering the user's questions using the provided company document context below.
-2. If the answer cannot be found in the provided context, answer the user's question using your general knowledge or general web results, keeping a helpful, professional customer support tone.
-3. Do NOT refuse to answer. Do NOT show "I'm sorry, I couldn't find..." unless the question is completely nonsensical.
-4. Keep the tone helpful, professional, and direct.
+      : `${configuredSystemPrompt}
 
 Provided Company Document Context:
 ${retrievedContext ? retrievedContext : "NO COMPANY DOCUMENTS ARE UPLOADED YET."}
@@ -119,7 +128,7 @@ ${retrievedContext ? retrievedContext : "NO COMPANY DOCUMENTS ARE UPLOADED YET."
       })),
     ];
 
-    // 7. Call Groq Chat Completions API (llama-3.3-70b-versatile)
+    // 7. Call Groq Chat Completions API
     const chatRes = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
@@ -129,9 +138,9 @@ ${retrievedContext ? retrievedContext : "NO COMPANY DOCUMENTS ARE UPLOADED YET."
           "Authorization": `Bearer ${groqKey}`
         },
         body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
+          model: activeModel,
           messages: apiMessages,
-          temperature: 0.1,
+          temperature: activeTemp,
           max_tokens: 1000
         }),
       }

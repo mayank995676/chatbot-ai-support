@@ -39,3 +39,13 @@ model Chunk {
   content    String
   embedding  String   // JSON-serialized array of floats (stored as Text)
 }
+
+model AgentSetting {
+  id              String   @id @default("default")
+  systemPrompt    String   @db.Text
+  temperature     Float    @default(0.1)
+  modelName       String   @default("llama-3.3-70b-versatile")
+  messageLimit    Int      @default(5)
+  updatedAt       DateTime @updatedAt
+}
+
